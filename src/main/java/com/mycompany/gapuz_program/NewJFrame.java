@@ -38,24 +38,22 @@ public class NewJFrame extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-        getContentPane().add(txt_username, new org.netbeans.lib.awtextra.AbsoluteConstraints(167, 55, -1, -1));
+        getContentPane().add(txt_username, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 70, 110, -1));
 
-        Jbutton.setText("button");
+        Jbutton.setText("Log In");
         Jbutton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 JbuttonActionPerformed(evt);
             }
         });
-        getContentPane().add(Jbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(167, 135, -1, -1));
+        getContentPane().add(Jbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 150, 100, -1));
 
         jLabel1.setText("username");
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(99, 58, -1, -1));
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 70, -1, -1));
 
         jLabel2.setText("password");
-        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(99, 98, -1, -1));
-
-        txt_password.setText("jPasswordField1");
-        getContentPane().add(txt_password, new org.netbeans.lib.awtextra.AbsoluteConstraints(167, 95, -1, -1));
+        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 110, -1, -1));
+        getContentPane().add(txt_password, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 110, 110, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -72,14 +70,17 @@ public class NewJFrame extends javax.swing.JFrame {
         pst.setString(2, userpassword);
             rs = pst.executeQuery();
             
-            if(!rs.next())
-            {
-            JOptionPane.showMessageDialog(null,"incorrect input either username or password");
-            
-            }
-            else
-            {
-            JOptionPane.showMessageDialog(null,"login successfull");
+            if (rs.next()) {
+                // If a record is found, the credentials match the database
+                JOptionPane.showMessageDialog(null, "Login Successful!");
+
+                // TODO: Open your main CRUD dashboard frame here
+                // MainDashboard main = new MainDashboard();
+                // main.setVisible(true);
+                // this.dispose(); 
+            } else {
+                // If no record is found, the credentials do not exist
+                JOptionPane.showMessageDialog(null, "Incorrect input: either username or password.");
             }
         }catch(SQLException e){
             
