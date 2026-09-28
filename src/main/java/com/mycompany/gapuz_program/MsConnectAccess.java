@@ -5,15 +5,13 @@
 package com.mycompany.gapuz_program;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 
 public class MsConnectAccess {
     public static Connection conn() {
         try {
-            String url = "jdbc:ucanaccess://C://Users//CL2-PC//Documents//gapuz1_database.accdb";
+            String url = "jdbc:ucanaccess://C://Users//Katherine Claire//Documents//gapuz1_database.accdb";
             Connection conn = DriverManager.getConnection(url);
             return conn;
         } catch (SQLException e) {
@@ -22,5 +20,4 @@ public class MsConnectAccess {
         return null;
 
     }
-    
 }
