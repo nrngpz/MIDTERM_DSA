@@ -12,7 +12,6 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
-
 /**
  *
  * @author CL2-PC
@@ -32,44 +31,35 @@ public class ADMIN extends javax.swing.JFrame {
      */
     public ADMIN() {
         initComponents();
-
-    btnsearch.addActionListener(e -> filterTableData());
-    jComboBox1.addActionListener(e -> filterTableData());
-    
-    txt7.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-        @Override
-        public void insertUpdate(javax.swing.event.DocumentEvent e) { filterTableData(); }
-        @Override
-        public void removeUpdate(javax.swing.event.DocumentEvent e) { filterTableData(); }
-        @Override
-        public void changedUpdate(javax.swing.event.DocumentEvent e) { filterTableData(); }
-    });
-
-    parentpanel.add(detailpanel, "detailpanel");
-    parentpanel.add(databasepanel, "databasepanel");
-
-    conn = MsConnectAccess.conn();
-    try {
-        java.sql.Statement stmt = conn.createStatement();
-        stmt.executeUpdate("ALTER TABLE TABLE_RECORD ADD COLUMN [All Pet Types] TEXT");
-    } catch (Exception e) {
-    } 
-    filterTableData();
+        parentpanel.add(detailpanel, "detailpanel");
+        parentpanel.add(databasepanel, "databasepanel");
+        conn = MsConnectAccess.conn();
+        filterTableData();
+        setFieldsEditable(true); // Must be true so fields are open by default
+    }
+    /**
+     * Safe helper method to retrieve string values from JTable model without risking NullPointerException
+     */
+    private String getModelValue(int modelRow, int column) {
+        Object value = jTable1.getModel().getValueAt(modelRow, column);
+        return (value != null) ? value.toString() : "";
     }
     
 
     private void filterTableData() {
     String searchText = txt7.getText().trim();
-    
+        
     Object selectedItem = jComboBox1.getSelectedItem();
     String selectedCategory = (selectedItem != null) ? selectedItem.toString() : "";
 
-    StringBuilder sql = new StringBuilder("SELECT * FROM TABLE_RECORD WHERE 1=1");
+    // Explicitly query columns with square brackets to match Access naming
+    StringBuilder sql = new StringBuilder("SELECT [Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All Pet Types] FROM [TABLE_RECORD] WHERE 1=1");
     
     boolean hasCategoryFilter = !selectedCategory.isEmpty() 
-    && !selectedCategory.equals("Type of Pets") 
-    && !selectedCategory.equals("All Pet Types") 
-    && !selectedCategory.equals("Type of Pet");
+        && !selectedCategory.equals("Type of Pets") 
+        && !selectedCategory.equals("All Pet Types") 
+        && !selectedCategory.equals("All Type of Pets") 
+        && !selectedCategory.equals("Type of Pet");
 
     if (hasCategoryFilter) {
         sql.append(" AND [All Pet Types] = ?");
@@ -77,7 +67,7 @@ public class ADMIN extends javax.swing.JFrame {
 
     boolean hasSearchText = !searchText.isEmpty();
     if (hasSearchText) {
-        sql.append(" AND (Pet_Name LIKE ? OR Breed LIKE ?)");
+        sql.append(" AND ([Pet_ID] LIKE ? OR [Pet_Name] LIKE ? OR [Owner_Name] LIKE ?)");
     }
 
     try (java.sql.Connection connLocal = MsConnectAccess.conn();
@@ -90,8 +80,10 @@ public class ADMIN extends javax.swing.JFrame {
         }
         
         if (hasSearchText) {
-            pstmt.setString(paramIndex++, "%" + searchText + "%");
-            pstmt.setString(paramIndex++, "%" + searchText + "%");
+            String wildcardSearch = "%" + searchText + "%";
+            pstmt.setString(paramIndex++, wildcardSearch); // For Pet_ID
+            pstmt.setString(paramIndex++, wildcardSearch); // For Pet_Name
+            pstmt.setString(paramIndex++, wildcardSearch); // For Owner_Name
         }
         
         try (java.sql.ResultSet rs = pstmt.executeQuery()) {
@@ -99,39 +91,37 @@ public class ADMIN extends javax.swing.JFrame {
         }
         
     } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Filter error: " + e.getMessage());
+        javax.swing.JOptionPane.showMessageDialog(this, "Filter error: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
     }
     }
     public static javax.swing.table.DefaultTableModel buildTableModel(java.sql.ResultSet rs) throws java.sql.SQLException {
     java.sql.ResultSetMetaData metaData = rs.getMetaData();
     
     // Names of columns
-    int columnCount = metaData.getColumnCount();
-    java.util.Vector<String> columnNames = new java.util.Vector<>();
-    for (int column = 1; column <= columnCount; column++) {
-        columnNames.add(metaData.getColumnName(column));
-    }
-    
-    // Data of the table
-    java.util.Vector<java.util.Vector<Object>> data = new java.util.Vector<>();
-    while (rs.next()) {
-        java.util.Vector<Object> vector = new java.util.Vector<>();
-        for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
-            vector.add(rs.getObject(columnIndex));
+        int columnCount = metaData.getColumnCount();
+        java.util.Vector<String> columnNames = new java.util.Vector<>();
+        for (int column = 1; column <= columnCount; column++) {
+            columnNames.add(metaData.getColumnName(column));
         }
-        data.add(vector);
+        
+        // Data of the table
+        java.util.Vector<java.util.Vector<Object>> data = new java.util.Vector<>();
+        while (rs.next()) {
+            java.util.Vector<Object> vector = new java.util.Vector<>();
+            for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+                vector.add(rs.getObject(columnIndex));
+            }
+            data.add(vector);
+        }
+        
+        return new javax.swing.table.DefaultTableModel(data, columnNames);
     }
-    
-    return new javax.swing.table.DefaultTableModel(data, columnNames);
-}
 
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
-
-   
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -177,9 +167,10 @@ public class ADMIN extends javax.swing.JFrame {
         parentpanel.setBackground(new java.awt.Color(102, 102, 102));
         parentpanel.setLayout(new java.awt.CardLayout());
 
-        detailpanel.setBackground(new java.awt.Color(204, 204, 204));
+        detailpanel.setBackground(new java.awt.Color(102, 102, 102));
         detailpanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+        btnadd.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnadd.setText("ADD");
         btnadd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -211,6 +202,7 @@ public class ADMIN extends javax.swing.JFrame {
         detailpanel.add(txt4, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 210, 210, -1));
         detailpanel.add(txt5, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 240, 180, -1));
 
+        btnview.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnview.setText("VIEW");
         btnview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -237,9 +229,10 @@ public class ADMIN extends javax.swing.JFrame {
 
         lblrecdet.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         lblrecdet.setText("PET RECORD DETAILS");
-        detailpanel.add(lblrecdet, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 60, 210, -1));
+        detailpanel.add(lblrecdet, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 70, 210, -1));
 
         btnlogout.setBackground(new java.awt.Color(153, 0, 0));
+        btnlogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnlogout.setText("LOG OUT");
         btnlogout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -282,7 +275,7 @@ public class ADMIN extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Pet_ID", "Pet_Name", "Breed", "Pet_Age", "Owner_Name", "Contact_Number", "Diagnosis/Notes", "Pet_Type"
+                "Pet_ID", "Pet_Name", "Breed", "Pet_Age", "Owner_Name", "Contact_Number", "Diagnosis_Notes", "ALL_Pet_Types"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -346,75 +339,82 @@ public class ADMIN extends javax.swing.JFrame {
     private void btnaddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnaddActionPerformed
         // TODO add your handling code here:
         String petId = txt1.getText().trim();
-        String name = txt2.getText().trim();  // txt2 = Pet Name
-        String breed = txt3.getText().trim(); // txt3 = Breed
-        String age = txt4.getText().trim();
-        String owner = txt5.getText().trim();
-        String contact = txt6.getText().trim();
-        String notes = txta1.getText().trim();
+String name = txt2.getText().trim(); 
+String breed = txt3.getText().trim(); 
+String age = txt4.getText().trim();
+String owner = txt5.getText().trim();
+String contact = txt6.getText().trim();
+String notes = txta1.getText().trim();
 
-        String petType = "";
-        if (jComboBox2.getSelectedItem() != null) {
-            petType = jComboBox2.getSelectedItem().toString().trim();
-        }
+String petType = "";
+if (jComboBox2.getSelectedItem() != null) {
+    petType = jComboBox2.getSelectedItem().toString().trim();
+}
 
-        if (petId.isEmpty() || name.isEmpty() || owner.isEmpty()) {
-            JOptionPane.showMessageDialog(rootPane, "Please fill in the required text fields!", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+if (petId.isEmpty() || name.isEmpty() || owner.isEmpty()) {
+    JOptionPane.showMessageDialog(rootPane, "Please fill in the required text fields!", "Warning", JOptionPane.WARNING_MESSAGE);
+    return;
+}
 
-        if (petType.isEmpty() || petType.equals("--Select Type--")) {
-            JOptionPane.showMessageDialog(rootPane, "Please choose a type of pet!", "Warning", JOptionPane.WARNING_MESSAGE);
-            jComboBox2.requestFocus();
-            return;
-        }
+if (petType.isEmpty() || petType.equals("--Select Type--")) {
+    JOptionPane.showMessageDialog(rootPane, "Please choose a type of pet!", "Warning", JOptionPane.WARNING_MESSAGE);
+    jComboBox2.requestFocus();
+    return;
+}
 
-        try {
-            if (isEditing) {
-        // Updated column name to [All Pet Types]
-        String sql = "UPDATE TABLE_RECORD SET [Pet Name]=?, Breed=?, [Pet Age]=?, [Owner Name]=?, [Contact Number]=?, [Diagnosis/Notes]=?, [All Pet Types]=? WHERE Pet_ID=?";
-        pst = conn.prepareStatement(sql);
+// Fixed: Added square brackets [] around table and column names for UCanAccess compatibility
+String sql = isEditing ? 
+    "UPDATE [TABLE_RECORD] SET [Pet_Name]=?, [Breed]=?, [Pet_Age]=?, [Owner_Name]=?, [Contact_Number]=?, [Diagnosis_Notes]=?, [All Pet Types]=? WHERE [Pet_ID]=?" :
+    "INSERT INTO [TABLE_RECORD] ([Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All Pet Types]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        pst.setString(1, name);
-        pst.setString(2, breed);
-        pst.setString(3, age);
-        pst.setString(4, owner);
-        pst.setString(5, contact);
-        pst.setString(6, notes);
-        pst.setString(7, petType);
-        pst.setString(8, selectedOldPetId);
+try (java.sql.Connection connLocal = MsConnectAccess.conn();
+     java.sql.PreparedStatement pstmt = connLocal.prepareStatement(sql)) {
 
-        pst.executeUpdate();
+    if (isEditing) {
+        pstmt.setString(1, name);
+        pstmt.setString(2, breed);
+        pstmt.setString(3, age);
+        pstmt.setString(4, owner);
+        pstmt.setString(5, contact);
+        pstmt.setString(6, notes);
+        pstmt.setString(7, petType);
+        pstmt.setString(8, selectedOldPetId);
+        pstmt.executeUpdate();
         JOptionPane.showMessageDialog(rootPane, "Record updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-
     } else {
-        // Updated column name to [All Pet Types]
-        String sql = "INSERT INTO TABLE_RECORD (Pet_ID, [Pet Name], Breed, [Pet Age], [Owner Name], [Contact Number], [Diagnosis/Notes], [All Pet Types]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        pst = conn.prepareStatement(sql);
-
-        pst.setString(1, petId);
-        pst.setString(2, name);
-        pst.setString(3, breed);
-        pst.setString(4, age);
-        pst.setString(5, owner);
-        pst.setString(6, contact);
-        pst.setString(7, notes);
-        pst.setString(8, petType);
-
-        pst.executeUpdate();
+        pstmt.setString(1, petId);
+        pstmt.setString(2, name);
+        pstmt.setString(3, breed);
+        pstmt.setString(4, age);
+        pstmt.setString(5, owner);
+        pstmt.setString(6, contact);
+        pstmt.setString(7, notes);
+        pstmt.setString(8, petType);
+        pstmt.executeUpdate();
         JOptionPane.showMessageDialog(rootPane, "New record added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
-        isEditing = false;
-        btnadd.setText("ADD");
-        setFieldsEditable(false);
+    // Reset back to normal ADD mode
+    isEditing = false;
+    btnadd.setText("ADD");
+    setFieldsEditable(true);
 
-        filterTableData();
-        java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
-        cardLayout.show(parentpanel, "databasepanel");
+    // Clear input fields
+    txt1.setText("");
+    txt2.setText("");
+    txt3.setText("");
+    txt4.setText("");
+    txt5.setText("");
+    txt6.setText("");
+    txta1.setText("");
+    jComboBox2.setSelectedIndex(0);
 
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(rootPane, "Database Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    filterTableData();
+    java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
+    cardLayout.show(parentpanel, "databasepanel");
+
+} catch (java.sql.SQLException e) {
+    JOptionPane.showMessageDialog(rootPane, "Database Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnaddActionPerformed
 
@@ -434,26 +434,26 @@ public class ADMIN extends javax.swing.JFrame {
 
         int modelRow = jTable1.convertRowIndexToModel(selectedRow);
 
-        selectedOldPetId = jTable1.getModel().getValueAt(modelRow, 0).toString();
+        selectedOldPetId = getModelValue(modelRow, 0);
 
         txt1.setText(selectedOldPetId);
-        txt2.setText(jTable1.getModel().getValueAt(modelRow, 1).toString()); // Column 1 = Pet Name
-        txt3.setText(jTable1.getModel().getValueAt(modelRow, 2).toString()); // Column 2 = Breed
-        txt4.setText(jTable1.getModel().getValueAt(modelRow, 3).toString());
-        txt5.setText(jTable1.getModel().getValueAt(modelRow, 4).toString());
-        txt6.setText(jTable1.getModel().getValueAt(modelRow, 5).toString());
-        txta1.setText(jTable1.getModel().getValueAt(modelRow, 6).toString());
+        txt2.setText(getModelValue(modelRow, 1)); 
+        txt3.setText(getModelValue(modelRow, 2)); 
+        txt4.setText(getModelValue(modelRow, 3));
+        txt5.setText(getModelValue(modelRow, 4));
+        txt6.setText(getModelValue(modelRow, 5));
+        txta1.setText(getModelValue(modelRow, 6));
 
         try {
-            String typeVal = jTable1.getModel().getValueAt(modelRow, 7).toString();
-            jComboBox2.setSelectedItem(typeVal);
+            String typeVal = getModelValue(modelRow, 7);
+            jComboBox2.setSelectedItem(typeVal != null ? typeVal.trim() : "--Select Type--");
         } catch (Exception e) {
             jComboBox2.setSelectedIndex(0);
         }
 
         isEditing = true;
-        btnadd.setText("SAVE"); 
-        setFieldsEditable(true);
+        btnadd.setText("SAVE"); // Changes ADD to SAVE ONLY when Edit is clicked
+        setFieldsEditable(true); // Unlocks fields for editing
 
         java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
         cardLayout.show(parentpanel, "detailpanel");
@@ -462,66 +462,59 @@ public class ADMIN extends javax.swing.JFrame {
     private void btndeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btndeleteActionPerformed
         // TODO add your handling code here:
         int selectedRow = jTable1.getSelectedRow();
-    if (selectedRow == -1) {
-        JOptionPane.showMessageDialog(rootPane, "Please select a record to delete!", "Warning", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    int modelRow = jTable1.convertRowIndexToModel(selectedRow);
-    
-    try {
-        String id = jTable1.getModel().getValueAt(modelRow, 0).toString();
-
-        int choice = JOptionPane.showConfirmDialog(rootPane, "Are you sure you want to delete this record?", "Delete Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (choice == JOptionPane.YES_OPTION) {
-            String sql = "DELETE FROM TABLE_RECORD WHERE Pet_ID=?";
-            pst = conn.prepareStatement(sql);
-            pst.setString(1, id);
-            
-            pst.executeUpdate();
-            JOptionPane.showMessageDialog(rootPane, "Record deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            
-            txt1.setText("");
-            txt2.setText("");
-            txt3.setText("");
-            txt4.setText("");
-            txt5.setText("");
-            txt6.setText("");
-            txta1.setText("");
-            
-            setFieldsEditable(false);
-            btnedit.setText("EDIT");
-            
-            filterTableData();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(rootPane, "Please select a record to delete!", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(rootPane, "Delete Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
+
+        int modelRow = jTable1.convertRowIndexToModel(selectedRow);
+        
+        try {
+            String id = getModelValue(modelRow, 0);
+
+            int choice = JOptionPane.showConfirmDialog(rootPane, "Are you sure you want to delete this record?", "Delete Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (choice == JOptionPane.YES_OPTION) {
+                String sql = "DELETE FROM TABLE_RECORD WHERE Pet_ID=?";
+                pst = conn.prepareStatement(sql);
+                pst.setString(1, id);
+                
+                pst.executeUpdate();
+                JOptionPane.showMessageDialog(rootPane, "Record deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                
+                txt1.setText("");
+                txt2.setText("");
+                txt3.setText("");
+                txt4.setText("");
+                txt5.setText("");
+                txt6.setText("");
+                txta1.setText("");
+                
+                setFieldsEditable(false);
+                btnedit.setText("EDIT");
+                
+                filterTableData();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(rootPane, "Delete Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btndeleteActionPerformed
     
     private void setFieldsEditable(boolean editable) {
-    txt1.setEditable(editable);
-    txt1.setEnabled(editable);
-    
-    txt2.setEditable(editable);
-    txt2.setEnabled(editable);
-    
-    txt3.setEditable(editable);
-    txt3.setEnabled(editable);
-    
-    txt4.setEditable(editable);
-    txt4.setEnabled(editable);
-    
-    txt5.setEditable(editable);
-    txt5.setEnabled(editable);
-    
-    txt6.setEditable(editable);
-    txt6.setEnabled(editable);
-    
-    txta1.setEditable(editable);
-    txta1.setEnabled(editable);
-    
-    jComboBox2.setEnabled(editable); // Unlocks your combobox dropdown
+        txt1.setEditable(editable);
+        txt1.setEnabled(editable);
+        txt2.setEditable(editable);
+        txt2.setEnabled(editable);
+        txt3.setEditable(editable);
+        txt3.setEnabled(editable);
+        txt4.setEditable(editable);
+        txt4.setEnabled(editable);
+        txt5.setEditable(editable);
+        txt5.setEnabled(editable);
+        txt6.setEditable(editable);
+        txt6.setEnabled(editable);
+        txta1.setEditable(editable);
+        txta1.setEnabled(editable);
+        jComboBox2.setEnabled(editable);
     }
     
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
@@ -530,24 +523,22 @@ public class ADMIN extends javax.swing.JFrame {
         if (row != -1) {
             int modelRow = jTable1.convertRowIndexToModel(row);
 
-            txt1.setText(jTable1.getModel().getValueAt(modelRow, 0).toString());
-            txt2.setText(jTable1.getModel().getValueAt(modelRow, 1).toString()); // Column 1 = Pet Name
-            txt3.setText(jTable1.getModel().getValueAt(modelRow, 2).toString()); // Column 2 = Breed
-            txt4.setText(jTable1.getModel().getValueAt(modelRow, 3).toString());
-            txt5.setText(jTable1.getModel().getValueAt(modelRow, 4).toString());
-            txt6.setText(jTable1.getModel().getValueAt(modelRow, 5).toString());
-            txta1.setText(jTable1.getModel().getValueAt(modelRow, 6).toString());
+            txt1.setText(getModelValue(modelRow, 0));
+            txt2.setText(getModelValue(modelRow, 1)); 
+            txt3.setText(getModelValue(modelRow, 2)); 
+            txt4.setText(getModelValue(modelRow, 3));
+            txt5.setText(getModelValue(modelRow, 4));
+            txt6.setText(getModelValue(modelRow, 5));
+            txta1.setText(getModelValue(modelRow, 6));
 
             try {
-                String typeVal = jTable1.getModel().getValueAt(modelRow, 7).toString();
-                jComboBox2.setSelectedItem(typeVal);
+                String typeVal = getModelValue(modelRow, 7);
+                jComboBox2.setSelectedItem(typeVal != null ? typeVal.trim() : "--Select Type--");
             } catch (Exception e) {
                 jComboBox2.setSelectedIndex(0);
             }
 
-            setFieldsEditable(false);
-            btnedit.setText("EDIT"); 
-
+            setFieldsEditable(false); // Keep uneditable until Edit is clicked
             btnedit.setEnabled(true);
             btndelete.setEnabled(true);
         }
@@ -563,24 +554,21 @@ public class ADMIN extends javax.swing.JFrame {
     private void btnbackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnbackActionPerformed
         // TODO add your handling code here:
         isEditing = false;
-    btnadd.setText("ADD");
+        btnadd.setText("ADD"); // Revert back to ADD when navigating back
 
-    // Unlock fields and combobox for typing
-    setFieldsEditable(true); 
+        setFieldsEditable(true); 
 
-    // Clear out text boxes for a fresh form
-    txt1.setText("");
-    txt2.setText("");
-    txt3.setText("");
-    txt4.setText("");
-    txt5.setText("");
-    txt6.setText("");
-    txta1.setText("");
-    jComboBox2.setSelectedIndex(0); 
+        txt1.setText("");
+        txt2.setText("");
+        txt3.setText("");
+        txt4.setText("");
+        txt5.setText("");
+        txt6.setText("");
+        txta1.setText("");
+        jComboBox2.setSelectedIndex(0); 
 
-    // Switch view to the detail panel
-    java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
-    cardLayout.show(parentpanel, "detailpanel");
+        java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
+        cardLayout.show(parentpanel, "detailpanel");
     }//GEN-LAST:event_btnbackActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
@@ -632,13 +620,7 @@ public class ADMIN extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
 
