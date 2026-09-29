@@ -33,13 +33,13 @@ public class ADMIN extends javax.swing.JFrame {
         initComponents();
         parentpanel.add(detailpanel, "detailpanel");
         parentpanel.add(databasepanel, "databasepanel");
-        conn = MsConnectAccess.conn();
+        conn = MsConnectAccess.conn();     
         filterTableData();
         setFieldsEditable(true); // Must be true so fields are open by default
     }
     /**
-     * Safe helper method to retrieve string values from JTable model without risking NullPointerException
-     */
+    * Safe helper method to retrieve string values from JTable model without risking NullPointerException
+    */
     private String getModelValue(int modelRow, int column) {
         Object value = jTable1.getModel().getValueAt(modelRow, column);
         return (value != null) ? value.toString() : "";
@@ -49,55 +49,51 @@ public class ADMIN extends javax.swing.JFrame {
     private void filterTableData() {
     String searchText = txt7.getText().trim();
         
-    Object selectedItem = jComboBox1.getSelectedItem();
-    String selectedCategory = (selectedItem != null) ? selectedItem.toString() : "";
+        Object selectedItem = jComboBox1.getSelectedItem();
+        String selectedCategory = (selectedItem != null) ? selectedItem.toString() : "";
 
-    // Explicitly query columns with square brackets to match Access naming
-    StringBuilder sql = new StringBuilder("SELECT [Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All Pet Types] FROM [TABLE_RECORD] WHERE 1=1");
-    
-    boolean hasCategoryFilter = !selectedCategory.isEmpty() 
-        && !selectedCategory.equals("Type of Pets") 
-        && !selectedCategory.equals("All Pet Types") 
-        && !selectedCategory.equals("All Type of Pets") 
-        && !selectedCategory.equals("Type of Pet");
-
-    if (hasCategoryFilter) {
-        sql.append(" AND [All Pet Types] = ?");
-    }
-
-    boolean hasSearchText = !searchText.isEmpty();
-    if (hasSearchText) {
-        sql.append(" AND ([Pet_ID] LIKE ? OR [Pet_Name] LIKE ? OR [Owner_Name] LIKE ?)");
-    }
-
-    try (java.sql.Connection connLocal = MsConnectAccess.conn();
-         java.sql.PreparedStatement pstmt = connLocal.prepareStatement(sql.toString())) {
+        // Strictly using All_Pet_Types
+        StringBuilder sql = new StringBuilder("SELECT [Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All_Pet_Types] FROM [TABLE_RECORD] WHERE 1=1");
         
-        int paramIndex = 1;
-        
+        boolean hasCategoryFilter = !selectedCategory.isEmpty() && !selectedCategory.equals("All_Pet_Types");
+
         if (hasCategoryFilter) {
-            pstmt.setString(paramIndex++, selectedCategory);
+            sql.append(" AND [All_Pet_Types] = ?");
         }
-        
+
+        boolean hasSearchText = !searchText.isEmpty();
         if (hasSearchText) {
-            String wildcardSearch = "%" + searchText + "%";
-            pstmt.setString(paramIndex++, wildcardSearch); // For Pet_ID
-            pstmt.setString(paramIndex++, wildcardSearch); // For Pet_Name
-            pstmt.setString(paramIndex++, wildcardSearch); // For Owner_Name
+            sql.append(" AND ([Pet_ID] LIKE ? OR [Pet_Name] LIKE ? OR [Owner_Name] LIKE ?)");
         }
-        
-        try (java.sql.ResultSet rs = pstmt.executeQuery()) {
-            jTable1.setModel(buildTableModel(rs));
+
+        try (java.sql.Connection connLocal = MsConnectAccess.conn();
+             java.sql.PreparedStatement pstmt = connLocal.prepareStatement(sql.toString())) {
+            
+            int paramIndex = 1;
+            
+            if (hasCategoryFilter) {
+                pstmt.setString(paramIndex++, selectedCategory);
+            }
+            
+            if (hasSearchText) {
+                String wildcardSearch = "%" + searchText + "%";
+                pstmt.setString(paramIndex++, wildcardSearch); // For Pet_ID
+                pstmt.setString(paramIndex++, wildcardSearch); // For Pet_Name
+                pstmt.setString(paramIndex++, wildcardSearch); // For Owner_Name
+            }
+            
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                jTable1.setModel(buildTableModel(rs));
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(rootPane, "Failed to filter table data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-        
-    } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Filter error: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-    }
     }
     public static javax.swing.table.DefaultTableModel buildTableModel(java.sql.ResultSet rs) throws java.sql.SQLException {
     java.sql.ResultSetMetaData metaData = rs.getMetaData();
     
-    // Names of columns
+        // Names of columns
         int columnCount = metaData.getColumnCount();
         java.util.Vector<String> columnNames = new java.util.Vector<>();
         for (int column = 1; column <= columnCount; column++) {
@@ -275,7 +271,7 @@ public class ADMIN extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Pet_ID", "Pet_Name", "Breed", "Pet_Age", "Owner_Name", "Contact_Number", "Diagnosis_Notes", "ALL_Pet_Types"
+                "Pet_ID", "Pet_Name", "Breed", "Pet_Age", "Owner_Name", "Contact_Number", "Diagnosis_Notes", "All_Pet_Types"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -339,82 +335,81 @@ public class ADMIN extends javax.swing.JFrame {
     private void btnaddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnaddActionPerformed
         // TODO add your handling code here:
         String petId = txt1.getText().trim();
-String name = txt2.getText().trim(); 
-String breed = txt3.getText().trim(); 
-String age = txt4.getText().trim();
-String owner = txt5.getText().trim();
-String contact = txt6.getText().trim();
-String notes = txta1.getText().trim();
+        String name = txt2.getText().trim(); 
+        String breed = txt3.getText().trim(); 
+        String age = txt4.getText().trim();
+        String owner = txt5.getText().trim();
+        String contact = txt6.getText().trim();
+        String notes = txta1.getText().trim();
 
-String petType = "";
-if (jComboBox2.getSelectedItem() != null) {
-    petType = jComboBox2.getSelectedItem().toString().trim();
-}
+        String petType = "";
+        if (jComboBox2.getSelectedItem() != null) {
+            petType = jComboBox2.getSelectedItem().toString().trim();
+        }
 
-if (petId.isEmpty() || name.isEmpty() || owner.isEmpty()) {
-    JOptionPane.showMessageDialog(rootPane, "Please fill in the required text fields!", "Warning", JOptionPane.WARNING_MESSAGE);
-    return;
-}
+        if (petId.isEmpty() || name.isEmpty() || owner.isEmpty()) {
+            JOptionPane.showMessageDialog(rootPane, "Please fill in all required fields.", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-if (petType.isEmpty() || petType.equals("--Select Type--")) {
-    JOptionPane.showMessageDialog(rootPane, "Please choose a type of pet!", "Warning", JOptionPane.WARNING_MESSAGE);
-    jComboBox2.requestFocus();
-    return;
-}
+        if (petType.isEmpty() || petType.equals("--Select Type--")) {
+            JOptionPane.showMessageDialog(rootPane, "Please select a pet type.", "Warning", JOptionPane.WARNING_MESSAGE);
+            jComboBox2.requestFocus();
+            return;
+        }
 
-// Fixed: Added square brackets [] around table and column names for UCanAccess compatibility
-String sql = isEditing ? 
-    "UPDATE [TABLE_RECORD] SET [Pet_Name]=?, [Breed]=?, [Pet_Age]=?, [Owner_Name]=?, [Contact_Number]=?, [Diagnosis_Notes]=?, [All Pet Types]=? WHERE [Pet_ID]=?" :
-    "INSERT INTO [TABLE_RECORD] ([Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All Pet Types]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = isEditing ? 
+            "UPDATE [TABLE_RECORD] SET [Pet_Name]=?, [Breed]=?, [Pet_Age]=?, [Owner_Name]=?, [Contact_Number]=?, [Diagnosis_Notes]=?, [All_Pet_Types]=? WHERE [Pet_ID]=?" :
+            "INSERT INTO [TABLE_RECORD] ([Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All_Pet_Types]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-try (java.sql.Connection connLocal = MsConnectAccess.conn();
-     java.sql.PreparedStatement pstmt = connLocal.prepareStatement(sql)) {
+        try (java.sql.Connection connLocal = MsConnectAccess.conn();
+             java.sql.PreparedStatement pstmt = connLocal.prepareStatement(sql)) {
 
-    if (isEditing) {
-        pstmt.setString(1, name);
-        pstmt.setString(2, breed);
-        pstmt.setString(3, age);
-        pstmt.setString(4, owner);
-        pstmt.setString(5, contact);
-        pstmt.setString(6, notes);
-        pstmt.setString(7, petType);
-        pstmt.setString(8, selectedOldPetId);
-        pstmt.executeUpdate();
-        JOptionPane.showMessageDialog(rootPane, "Record updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-    } else {
-        pstmt.setString(1, petId);
-        pstmt.setString(2, name);
-        pstmt.setString(3, breed);
-        pstmt.setString(4, age);
-        pstmt.setString(5, owner);
-        pstmt.setString(6, contact);
-        pstmt.setString(7, notes);
-        pstmt.setString(8, petType);
-        pstmt.executeUpdate();
-        JOptionPane.showMessageDialog(rootPane, "New record added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-    }
+            if (isEditing) {
+                pstmt.setString(1, name);
+                pstmt.setString(2, breed);
+                pstmt.setString(3, age);
+                pstmt.setString(4, owner);
+                pstmt.setString(5, contact);
+                pstmt.setString(6, notes);
+                pstmt.setString(7, petType);
+                pstmt.setString(8, selectedOldPetId);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(rootPane, "Record updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                pstmt.setString(1, petId);
+                pstmt.setString(2, name);
+                pstmt.setString(3, breed);
+                pstmt.setString(4, age);
+                pstmt.setString(5, owner);
+                pstmt.setString(6, contact);
+                pstmt.setString(7, notes);
+                pstmt.setString(8, petType);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(rootPane, "New record added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
 
-    // Reset back to normal ADD mode
-    isEditing = false;
-    btnadd.setText("ADD");
-    setFieldsEditable(true);
+            // Reset back to normal ADD mode
+            isEditing = false;
+            btnadd.setText("ADD");
+            setFieldsEditable(true);
 
-    // Clear input fields
-    txt1.setText("");
-    txt2.setText("");
-    txt3.setText("");
-    txt4.setText("");
-    txt5.setText("");
-    txt6.setText("");
-    txta1.setText("");
-    jComboBox2.setSelectedIndex(0);
+            // Clear input fields
+            txt1.setText("");
+            txt2.setText("");
+            txt3.setText("");
+            txt4.setText("");
+            txt5.setText("");
+            txt6.setText("");
+            txta1.setText("");
+            jComboBox2.setSelectedIndex(0);
 
-    filterTableData();
-    java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
-    cardLayout.show(parentpanel, "databasepanel");
+            filterTableData();
+            java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
+            cardLayout.show(parentpanel, "databasepanel");
 
-} catch (java.sql.SQLException e) {
-    JOptionPane.showMessageDialog(rootPane, "Database Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (java.sql.SQLException e) {
+            JOptionPane.showMessageDialog(rootPane, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnaddActionPerformed
 
@@ -428,7 +423,7 @@ try (java.sql.Connection connLocal = MsConnectAccess.conn();
         // TODO add your handling code here:
         int selectedRow = jTable1.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(rootPane, "Please select a record from the database table first!", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(rootPane, "Please select a record from the table to edit.", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -463,39 +458,34 @@ try (java.sql.Connection connLocal = MsConnectAccess.conn();
         // TODO add your handling code here:
         int selectedRow = jTable1.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(rootPane, "Please select a record to delete!", "Warning", JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(rootPane, "Please select a record to delete.", "WARNING", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int modelRow = jTable1.convertRowIndexToModel(selectedRow);
-        
-        try {
-            String id = getModelValue(modelRow, 0);
+        String id = jTable1.getModel().getValueAt(modelRow, 0).toString();
 
-            int choice = JOptionPane.showConfirmDialog(rootPane, "Are you sure you want to delete this record?", "Delete Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (choice == JOptionPane.YES_OPTION) {
-                String sql = "DELETE FROM TABLE_RECORD WHERE Pet_ID=?";
-                pst = conn.prepareStatement(sql);
-                pst.setString(1, id);
-                
-                pst.executeUpdate();
-                JOptionPane.showMessageDialog(rootPane, "Record deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                
-                txt1.setText("");
-                txt2.setText("");
-                txt3.setText("");
-                txt4.setText("");
-                txt5.setText("");
-                txt6.setText("");
-                txta1.setText("");
-                
-                setFieldsEditable(false);
-                btnedit.setText("EDIT");
-                
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(rootPane, 
+                "Are you sure you want to delete this record?", 
+                "CONFIRMATION", 
+                javax.swing.JOptionPane.YES_NO_OPTION, 
+                javax.swing.JOptionPane.QUESTION_MESSAGE);
+
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            try (java.sql.Connection connLocal = MsConnectAccess.conn();
+                 java.sql.PreparedStatement pstmt = connLocal.prepareStatement("DELETE FROM TABLE_RECORD WHERE Pet_ID=?")) {
+
+                pstmt.setString(1, id);
+                pstmt.executeUpdate();
+
+                javax.swing.JOptionPane.showMessageDialog(rootPane, "Record deleted successfully!", "SUCCESS", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+
+                // Refresh the table to instantly remove the deleted row from view
                 filterTableData();
+
+            } catch (java.sql.SQLException e) {
+                javax.swing.JOptionPane.showMessageDialog(rootPane, "Database error: " + e.getMessage(), "ERROR", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(rootPane, "Delete Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btndeleteActionPerformed
     
@@ -594,6 +584,25 @@ try (java.sql.Connection connLocal = MsConnectAccess.conn();
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(ADMIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+        //</editor-fold>
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {

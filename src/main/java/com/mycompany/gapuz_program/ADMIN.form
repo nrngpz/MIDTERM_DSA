@@ -356,7 +356,7 @@
                         <Column editable="false" title="Owner_Name" type="java.lang.Object"/>
                         <Column editable="false" title="Contact_Number" type="java.lang.Object"/>
                         <Column editable="false" title="Diagnosis_Notes" type="java.lang.Object"/>
-                        <Column editable="false" title="ALL_Pet_Types" type="java.lang.Object"/>
+                        <Column editable="false" title="All_Pet_Types" type="java.lang.Object"/>
                       </Table>
                     </Property>
                   </Properties>
