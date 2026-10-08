@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.mycompany.gapuz_program;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,61 +23,42 @@ public class LOGIN extends javax.swing.JFrame {
         // 1. Connect to Access
         conn = MsConnectAccess.conn();
         
-        // 2. Automatically create the login table and default accounts (Option 1)
+        // 2. Automatically create Table1 and default accounts
         createLoginTableAndDefaultAccounts();
     }
     
     // This method automatically sets up Table1 and your 4 accounts so you don't have to do it manually at school
     private void createLoginTableAndDefaultAccounts() {
-    try {
-        Statement stmt = conn.createStatement();
+    String createTableSQL = "CREATE TABLE Table1 (username VARCHAR(255) PRIMARY KEY, [password] VARCHAR(255))";
         
-        // --- 1. SETUP LOGIN TABLE (TABLE_LOGIN) ---
-        try {
-            stmt.execute("DROP TABLE TABLE_LOGIN");
-        } catch (Exception ex) {
-            // Ignore if TABLE_LOGIN doesn't exist yet
+        try (Statement stmt = conn.createStatement()) {
+            try {
+                stmt.execute("DROP TABLE Table1");
+            } catch (Exception ex) {
+                // Ignore if Table1 doesn't exist yet
+            }
+
+            stmt.execute(createTableSQL);
+
+            // Insert your 4 default accounts
+            String[] users = {"admin", "frontdesk1", "frontdesk2", "frontdesk3"};
+            String[] passwords = {"admin123", "frontdesk1111", "frontdesk2222", "frontdesk3333"};
+
+            String insertSQL = "INSERT INTO Table1 (username, [password]) VALUES (?, ?)";
+            for (int i = 0; i < users.length; i++) {
+                try (PreparedStatement insertPst = conn.prepareStatement(insertSQL)) {
+                    insertPst.setString(1, users[i]);
+                    insertPst.setString(2, passwords[i]);
+                    insertPst.executeUpdate();
+                }
+            }
+            
+            System.out.println("Table1 configured successfully!");
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(rootPane, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
         }
-
-        String createTableSQL = "CREATE TABLE TABLE_LOGIN (username VARCHAR(255) PRIMARY KEY, [password] VARCHAR(255))";
-        stmt.execute(createTableSQL);
-
-        // Insert your 4 default accounts
-        String[] users = {"admin", "frontdesk1", "frontdesk2", "frontdesk3"};
-        String[] password = {"admin123", "frontdesk1111", "frontdesk2222", "frontdesk3333"};
-
-        for (int i = 0; i < users.length; i++) {
-            String insertSQL = "INSERT INTO TABLE_LOGIN (username, [password]) VALUES (?, ?)";
-            PreparedStatement insertPst = conn.prepareStatement(insertSQL);
-            insertPst.setString(1, users[i]);
-            insertPst.setString(2, password[i]);
-            insertPst.executeUpdate();
-        }
-
-        // --- 2. SETUP PET RECORD TABLE (TABLE_RECORD) ---
-        try {
-            stmt.execute("DROP TABLE TABLE_RECORD");
-        } catch (Exception ex) {
-            // Ignore if TABLE_RECORD doesn't exist yet
-        }
-
-        // All text fields set to VARCHAR(255)
-        String createTable2SQL = "CREATE TABLE TABLE_RECORD (" +
-            "Pet_ID VARCHAR(255) PRIMARY KEY, " +
-            "[Pet Name] VARCHAR(255), " +
-            "[Breed] VARCHAR(255), " +
-            "[Pet Age] VARCHAR(255), " +
-            "[Owner Name] VARCHAR(255), " +
-            "[Contact Number] VARCHAR(255), " +
-            "[Diagnosis/Notes] VARCHAR(255))";
-            stmt.execute(createTable2SQL);
-        
-        System.out.println("Tables configured successfully!");
-        
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(rootPane, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
     }
-}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -87,40 +69,52 @@ public class LOGIN extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        txt_username = new javax.swing.JTextField();
-        lblusername = new javax.swing.JLabel();
-        lblpassword = new javax.swing.JLabel();
-        txt_password = new javax.swing.JPasswordField();
         jPanel1 = new javax.swing.JPanel();
         Jbutton = new javax.swing.JButton();
+        txt_password = new javax.swing.JPasswordField();
+        txt_username = new javax.swing.JTextField();
+        lblpassword = new javax.swing.JLabel();
+        lblusername = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-        getContentPane().add(txt_username, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 70, 140, 30));
-
-        lblusername.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        lblusername.setText("Username:");
-        getContentPane().add(lblusername, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 70, -1, -1));
-
-        lblpassword.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        lblpassword.setText("Password:");
-        getContentPane().add(lblpassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 120, -1, -1));
-        getContentPane().add(txt_password, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 120, 140, 30));
 
         jPanel1.setBackground(new java.awt.Color(102, 102, 102));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        Jbutton.setBackground(new java.awt.Color(0, 0, 204));
+        Jbutton.setBackground(new java.awt.Color(51, 51, 51));
         Jbutton.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        Jbutton.setText("Log In");
+        Jbutton.setForeground(new java.awt.Color(255, 255, 255));
+        Jbutton.setText("LOG IN");
         Jbutton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 JbuttonActionPerformed(evt);
             }
         });
-        jPanel1.add(Jbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 220, 150, 50));
+        jPanel1.add(Jbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 360, 120, 40));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(-40, -40, 660, 360));
+        txt_password.setBackground(new java.awt.Color(153, 153, 153));
+        jPanel1.add(txt_password, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 290, 230, 30));
+
+        txt_username.setBackground(new java.awt.Color(153, 153, 153));
+        jPanel1.add(txt_username, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 230, 230, 30));
+
+        lblpassword.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblpassword.setForeground(new java.awt.Color(255, 255, 255));
+        lblpassword.setText("PASSWORD:");
+        jPanel1.add(lblpassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 290, -1, -1));
+
+        lblusername.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblusername.setForeground(new java.awt.Color(255, 255, 255));
+        lblusername.setText("USERNAME:");
+        jPanel1.add(lblusername, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 230, -1, -1));
+
+        jLabel1.setIcon(new javax.swing.ImageIcon("C:\\Users\\Katherine Claire\\Downloads\\Your paragraph text (2).jpg")); // NOI18N
+        jLabel1.setText("jLabel1");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 860, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 860, 640));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -129,29 +123,36 @@ public class LOGIN extends javax.swing.JFrame {
         String username = txt_username.getText().trim();
         char[] pass = txt_password.getPassword();
         String userpassword = String.valueOf(pass);
-        
-        try {
-            String sqlquery = "SELECT * FROM Table1 WHERE username = ? AND [password] = ?";
-            pst = conn.prepareStatement(sqlquery);
-            pst.setString(1, username);
-            pst.setString(2, userpassword);
-            rs = pst.executeQuery();
-            
-            if (rs.next()) {
-                // Credentials match!
-                JOptionPane.showMessageDialog(null, "Login Successful!");
 
-                // Open your CRUD dashboard window and close login
-                ADMIN crudWindow = new ADMIN();
-                crudWindow.setVisible(true);
-                this.dispose(); 
-                
-            } else {
-                // Wrong username or password
-                JOptionPane.showMessageDialog(null, "Incorrect input: either username or password", "ERROR", JOptionPane.ERROR_MESSAGE);
+        // Check if connection is active
+        if (conn == null) {
+            JOptionPane.showMessageDialog(null, "Database connection failed! Check MsConnectAccess.", "ERROR", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String sqlquery = "SELECT * FROM Table1 WHERE username = ? AND [password] = ?";
+
+        // Use local PreparedStatement and ResultSet inside try-with-resources to prevent file locking
+        try (PreparedStatement pstLocal = conn.prepareStatement(sqlquery)) {
+            pstLocal.setString(1, username);
+            pstLocal.setString(2, userpassword);
+
+            try (ResultSet rsLocal = pstLocal.executeQuery()) {
+                if (rsLocal.next()) {
+                    // Credentials match!
+                    JOptionPane.showMessageDialog(null, "Login Successful!");
+
+                    ADMIN crudWindow = new ADMIN();
+                    crudWindow.setVisible(true);
+                    this.dispose(); 
+
+                } else {
+                    // Wrong username or password
+                    JOptionPane.showMessageDialog(null, "Incorrect input: either username or password", "ERROR", JOptionPane.ERROR_MESSAGE);
+                }
             }
         } catch(SQLException e) {
-            JOptionPane.showMessageDialog(null, e);
+            JOptionPane.showMessageDialog(null, e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_JbuttonActionPerformed
 
@@ -183,6 +184,17 @@ public class LOGIN extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(LOGIN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new LOGIN().setVisible(true);
@@ -194,6 +206,7 @@ public class LOGIN extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Jbutton;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblpassword;
     private javax.swing.JLabel lblusername;

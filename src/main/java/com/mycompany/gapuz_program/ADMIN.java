@@ -31,11 +31,16 @@ public class ADMIN extends javax.swing.JFrame {
      */
     public ADMIN() {
         initComponents();
+        // Cleanly override generated card names to prevent switching glitches
+        parentpanel.removeAll();
         parentpanel.add(detailpanel, "detailpanel");
         parentpanel.add(databasepanel, "databasepanel");
-        conn = MsConnectAccess.conn();     
+        parentpanel.revalidate();
+        parentpanel.repaint();
+
+        conn = MsConnectAccess.conn();      
         filterTableData();
-        setFieldsEditable(true); // Must be true so fields are open by default
+        setFieldsEditable(true);
     }
     /**
     * Safe helper method to retrieve string values from JTable model without risking NullPointerException
@@ -47,14 +52,15 @@ public class ADMIN extends javax.swing.JFrame {
     
 
     private void filterTableData() {
-    String searchText = txt7.getText().trim();
-        
+        String searchText = txt7.getText().trim();
+
         Object selectedItem = jComboBox1.getSelectedItem();
         String selectedCategory = (selectedItem != null) ? selectedItem.toString() : "";
 
-        // Strictly using All_Pet_Types
+        // Base SQL query
         StringBuilder sql = new StringBuilder("SELECT [Pet_ID], [Pet_Name], [Breed], [Pet_Age], [Owner_Name], [Contact_Number], [Diagnosis_Notes], [All_Pet_Types] FROM [TABLE_RECORD] WHERE 1=1");
-        
+
+        // Check if a category is selected (ignoring the default "All_Pet_Types" option)
         boolean hasCategoryFilter = !selectedCategory.isEmpty() && !selectedCategory.equals("All_Pet_Types");
 
         if (hasCategoryFilter) {
@@ -68,27 +74,28 @@ public class ADMIN extends javax.swing.JFrame {
 
         try (java.sql.Connection connLocal = MsConnectAccess.conn();
              java.sql.PreparedStatement pstmt = connLocal.prepareStatement(sql.toString())) {
-            
+
             int paramIndex = 1;
-            
+
             if (hasCategoryFilter) {
                 pstmt.setString(paramIndex++, selectedCategory);
             }
-            
+
             if (hasSearchText) {
                 String wildcardSearch = "%" + searchText + "%";
                 pstmt.setString(paramIndex++, wildcardSearch); // For Pet_ID
                 pstmt.setString(paramIndex++, wildcardSearch); // For Pet_Name
                 pstmt.setString(paramIndex++, wildcardSearch); // For Owner_Name
             }
-            
+
             try (java.sql.ResultSet rs = pstmt.executeQuery()) {
                 jTable1.setModel(buildTableModel(rs));
             }
-            
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(rootPane, "Failed to filter table data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+        
     }
     public static javax.swing.table.DefaultTableModel buildTableModel(java.sql.ResultSet rs) throws java.sql.SQLException {
     java.sql.ResultSetMetaData metaData = rs.getMetaData();
@@ -145,6 +152,7 @@ public class ADMIN extends javax.swing.JFrame {
         btnlogout = new javax.swing.JButton();
         jComboBox2 = new javax.swing.JComboBox<>();
         jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
         databasepanel = new javax.swing.JPanel();
         btnedit = new javax.swing.JButton();
         btndelete = new javax.swing.JButton();
@@ -156,6 +164,7 @@ public class ADMIN extends javax.swing.JFrame {
         lbldatabase = new javax.swing.JLabel();
         btnback = new javax.swing.JButton();
         btnsearch = new javax.swing.JButton();
+        jLabel11 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -164,84 +173,126 @@ public class ADMIN extends javax.swing.JFrame {
         parentpanel.setLayout(new java.awt.CardLayout());
 
         detailpanel.setBackground(new java.awt.Color(102, 102, 102));
+        detailpanel.setPreferredSize(new java.awt.Dimension(830, 550));
         detailpanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        btnadd.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnadd.setBackground(new java.awt.Color(51, 51, 51));
+        btnadd.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnadd.setForeground(new java.awt.Color(255, 255, 255));
         btnadd.setText("ADD");
         btnadd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnaddActionPerformed(evt);
             }
         });
-        detailpanel.add(btnadd, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 480, 120, 40));
+        detailpanel.add(btnadd, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 500, 120, 40));
 
-        jLabel1.setText("Pet ID:");
-        detailpanel.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
+        jLabel1.setBackground(new java.awt.Color(255, 255, 255));
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("PET ID:");
+        detailpanel.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 130, -1, -1));
 
-        jLabel2.setText("Pet Name:");
-        detailpanel.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, -1, 20));
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setText("PET NAME:");
+        detailpanel.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 160, -1, 20));
 
-        jLabel3.setText("Breed:");
-        detailpanel.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 180, -1, -1));
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setText("BREED:");
+        detailpanel.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 190, -1, -1));
 
-        jLabel4.setText("Owner name:");
-        detailpanel.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 240, -1, -1));
-        detailpanel.add(txt1, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 120, 220, -1));
-        detailpanel.add(txt2, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 150, 220, -1));
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel4.setText("OWNER NAME:");
+        detailpanel.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 250, -1, -1));
 
+        txt1.setBackground(new java.awt.Color(153, 153, 153));
+        detailpanel.add(txt1, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 130, 220, -1));
+
+        txt2.setBackground(new java.awt.Color(153, 153, 153));
+        detailpanel.add(txt2, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 160, 200, -1));
+
+        txt3.setBackground(new java.awt.Color(153, 153, 153));
         txt3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txt3ActionPerformed(evt);
             }
         });
-        detailpanel.add(txt3, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 180, 200, -1));
-        detailpanel.add(txt4, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 210, 210, -1));
-        detailpanel.add(txt5, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 240, 180, -1));
+        detailpanel.add(txt3, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 190, 220, -1));
 
-        btnview.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        txt4.setBackground(new java.awt.Color(153, 153, 153));
+        detailpanel.add(txt4, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 220, 210, -1));
+
+        txt5.setBackground(new java.awt.Color(153, 153, 153));
+        detailpanel.add(txt5, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 250, 180, -1));
+
+        btnview.setBackground(new java.awt.Color(51, 51, 51));
+        btnview.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnview.setForeground(new java.awt.Color(255, 255, 255));
         btnview.setText("VIEW");
         btnview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnviewActionPerformed(evt);
             }
         });
-        detailpanel.add(btnview, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 480, 120, 40));
+        detailpanel.add(btnview, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 500, 120, 40));
 
-        jLabel5.setText("Pet Age:");
-        detailpanel.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, -1, -1));
+        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel5.setText("PET AGE:");
+        detailpanel.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 220, -1, -1));
 
-        jLabel6.setText("Contact Number:");
-        detailpanel.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 270, -1, -1));
+        jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel6.setText("CONTACT NUMBER:");
+        detailpanel.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 280, -1, -1));
 
+        txta1.setBackground(new java.awt.Color(153, 153, 153));
         txta1.setColumns(20);
         txta1.setRows(5);
         jScrollPane2.setViewportView(txta1);
 
-        detailpanel.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 370, 260, 100));
+        detailpanel.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 380, 270, 100));
 
-        jLabel7.setText("Diagnosis/Notes:");
-        detailpanel.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 350, -1, -1));
-        detailpanel.add(txt6, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 270, 160, -1));
+        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel7.setText("DIAGNOSIS/NOTES:");
+        detailpanel.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 360, -1, -1));
+
+        txt6.setBackground(new java.awt.Color(153, 153, 153));
+        detailpanel.add(txt6, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 280, 150, -1));
 
         lblrecdet.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblrecdet.setForeground(new java.awt.Color(153, 153, 153));
         lblrecdet.setText("PET RECORD DETAILS");
-        detailpanel.add(lblrecdet, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 70, 210, -1));
+        detailpanel.add(lblrecdet, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 90, 210, -1));
 
         btnlogout.setBackground(new java.awt.Color(153, 0, 0));
-        btnlogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnlogout.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnlogout.setText("LOG OUT");
         btnlogout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnlogoutActionPerformed(evt);
             }
         });
-        detailpanel.add(btnlogout, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 90, 30));
+        detailpanel.add(btnlogout, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 100, 30));
 
+        jComboBox2.setBackground(new java.awt.Color(153, 153, 153));
+        jComboBox2.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jComboBox2.setForeground(new java.awt.Color(255, 255, 255));
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--Select Type--", "Cat", "Dog" }));
-        detailpanel.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 300, 190, -1));
+        detailpanel.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 310, 190, -1));
 
-        jLabel9.setText("Type of Pet:");
-        detailpanel.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 300, -1, -1));
+        jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel9.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel9.setText("TYPE OF PET:");
+        detailpanel.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 310, -1, -1));
+
+        jLabel10.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel10.setIcon(new javax.swing.ImageIcon("C:\\Users\\Katherine Claire\\Downloads\\Copy of Your paragraph text (1).jpg")); // NOI18N
+        detailpanel.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -30, 850, 620));
 
         parentpanel.add(detailpanel, "card2");
 
@@ -249,6 +300,8 @@ public class ADMIN extends javax.swing.JFrame {
         databasepanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         btnedit.setBackground(new java.awt.Color(0, 102, 0));
+        btnedit.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnedit.setForeground(new java.awt.Color(255, 255, 255));
         btnedit.setText("EDIT");
         btnedit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -258,6 +311,8 @@ public class ADMIN extends javax.swing.JFrame {
         databasepanel.add(btnedit, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 510, 90, 40));
 
         btndelete.setBackground(new java.awt.Color(204, 0, 0));
+        btndelete.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btndelete.setForeground(new java.awt.Color(255, 255, 255));
         btndelete.setText("DELETE");
         btndelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -266,6 +321,8 @@ public class ADMIN extends javax.swing.JFrame {
         });
         databasepanel.add(btndelete, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 510, 90, 40));
 
+        jTable1.setBackground(new java.awt.Color(153, 153, 153));
+        jTable1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -289,26 +346,33 @@ public class ADMIN extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        databasepanel.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, 810, 360));
+        databasepanel.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 160, 810, 340));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Type of Pets", "Cat", "Dog" }));
+        jComboBox1.setBackground(new java.awt.Color(153, 153, 153));
+        jComboBox1.setForeground(new java.awt.Color(255, 255, 255));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All_Pet_Types", "Cat", "Dog" }));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jComboBox1ActionPerformed(evt);
             }
         });
-        databasepanel.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 90, 140, -1));
+        databasepanel.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 130, 140, -1));
 
-        jLabel8.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel8.setText("Search Record:");
-        databasepanel.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, -1, -1));
-        databasepanel.add(txt7, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 90, 160, -1));
+        jLabel8.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel8.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel8.setText("SEARCH RECORD:");
+        databasepanel.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, 120, -1));
+
+        txt7.setBackground(new java.awt.Color(153, 153, 153));
+        databasepanel.add(txt7, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 130, 170, -1));
 
         lbldatabase.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lbldatabase.setForeground(new java.awt.Color(153, 153, 153));
         lbldatabase.setText("PET RECORD DATABASE");
-        databasepanel.add(lbldatabase, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 30, -1, -1));
+        databasepanel.add(lbldatabase, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 90, -1, -1));
 
         btnback.setBackground(new java.awt.Color(153, 0, 0));
+        btnback.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnback.setText("BACK");
         btnback.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -317,13 +381,19 @@ public class ADMIN extends javax.swing.JFrame {
         });
         databasepanel.add(btnback, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 30, 90, 30));
 
+        btnsearch.setBackground(new java.awt.Color(51, 51, 51));
+        btnsearch.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnsearch.setForeground(new java.awt.Color(255, 255, 255));
         btnsearch.setText("SEARCH");
         btnsearch.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnsearchActionPerformed(evt);
             }
         });
-        databasepanel.add(btnsearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 90, -1, -1));
+        databasepanel.add(btnsearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 130, -1, -1));
+
+        jLabel11.setIcon(new javax.swing.ImageIcon("C:\\Users\\Katherine Claire\\Downloads\\Copy of Your paragraph text (1).jpg")); // NOI18N
+        databasepanel.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
 
         parentpanel.add(databasepanel, "card2");
 
@@ -428,7 +498,6 @@ public class ADMIN extends javax.swing.JFrame {
         }
 
         int modelRow = jTable1.convertRowIndexToModel(selectedRow);
-
         selectedOldPetId = getModelValue(modelRow, 0);
 
         txt1.setText(selectedOldPetId);
@@ -447,8 +516,14 @@ public class ADMIN extends javax.swing.JFrame {
         }
 
         isEditing = true;
-        btnadd.setText("SAVE"); // Changes ADD to SAVE ONLY when Edit is clicked
-        setFieldsEditable(true); // Unlocks fields for editing
+        btnadd.setText("SAVE"); 
+
+        // 1. UNLOCK all fields first so you can type in them
+        setFieldsEditable(true);
+
+        // 2. LOCK Pet ID field AFTER so the primary key doesn't get modified
+        txt1.setEditable(false);
+        txt1.setEnabled(false);
 
         java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
         cardLayout.show(parentpanel, "detailpanel");
@@ -544,10 +619,13 @@ public class ADMIN extends javax.swing.JFrame {
     private void btnbackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnbackActionPerformed
         // TODO add your handling code here:
         isEditing = false;
-        btnadd.setText("ADD"); // Revert back to ADD when navigating back
+        btnadd.setText("ADD"); // Revert back to ADD 
 
         setFieldsEditable(true); 
+        txt1.setEditable(true);  // Unlock Pet ID for new records
+        txt1.setEnabled(true);
 
+        // Clear all text fields
         txt1.setText("");
         txt2.setText("");
         txt3.setText("");
@@ -557,6 +635,7 @@ public class ADMIN extends javax.swing.JFrame {
         txta1.setText("");
         jComboBox2.setSelectedIndex(0); 
 
+        // Switch back to the detail/add panel
         java.awt.CardLayout cardLayout = (java.awt.CardLayout) parentpanel.getLayout();
         cardLayout.show(parentpanel, "detailpanel");
     }//GEN-LAST:event_btnbackActionPerformed
@@ -653,6 +732,8 @@ public class ADMIN extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
